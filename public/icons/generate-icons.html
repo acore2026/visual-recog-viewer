@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Generate Icons</title>
+</head>
+<body>
+  <canvas id="canvas192" width="192" height="192"></canvas>
+  <canvas id="canvas512" width="512" height="512"></canvas>
+  <script>
+    function drawIcon(canvas) {
+      const ctx = canvas.getContext('2d');
+      const size = canvas.width;
+
+      // Background gradient
+      const gradient = ctx.createLinearGradient(0, 0, size, size);
+      gradient.addColorStop(0, '#1a1a2e');
+      gradient.addColorStop(1, '#16213e');
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, size, size);
+
+      // Border
+      ctx.strokeStyle = '#e94560';
+      ctx.lineWidth = size * 0.03;
+      ctx.strokeRect(size * 0.05, size * 0.05, size * 0.9, size * 0.9);
+
+      // Camera body
+      ctx.fillStyle = '#0f3460';
+      ctx.fillRect(size * 0.2, size * 0.35, size * 0.6, size * 0.4);
+
+      // Camera lens
+      ctx.beginPath();
+      ctx.arc(size * 0.5, size * 0.55, size * 0.15, 0, Math.PI * 2);
+      ctx.fillStyle = '#e94560';
+      ctx.fill();
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = size * 0.02;
+      ctx.stroke();
+
+      // Viewfinder
+      ctx.fillStyle = '#e94560';
+      ctx.fillRect(size * 0.35, size * 0.25, size * 0.3, size * 0.1);
+
+      // Detection box
+      ctx.strokeStyle = '#4caf50';
+      ctx.lineWidth = size * 0.015;
+      ctx.strokeRect(size * 0.55, size * 0.45, size * 0.2, size * 0.2);
+
+      // Label
+      ctx.fillStyle = '#4caf50';
+      ctx.fillRect(size * 0.55, size * 0.38, size * 0.2, size * 0.07);
+      ctx.fillStyle = '#fff';
+      ctx.font = `bold ${size * 0.05}px Arial`;
+      ctx.textAlign = 'center';
+      ctx.fillText('OBJ', size * 0.65, size * 0.43);
+
+      // Download link
+      const link = document.createElement('a');
+      link.download = `icon-${size}x${size}.png`;
+      link.href = canvas.toDataURL('image/png');
+      link.textContent = `Download ${size}x${size}`;
+      document.body.appendChild(document.createElement('br'));
+      document.body.appendChild(link);
+    }
+
+    drawIcon(document.getElementById('canvas192'));
+    drawIcon(document.getElementById('canvas512'));
+  </script>
+</body>
+</html>

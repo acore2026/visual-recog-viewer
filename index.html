@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1a1a2e">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>Visual Recog Viewer</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/png" href="/icons/icon-192x192.png">
+  <script type="module" src="./src/main.ts"></script>
+</head>
+<body>
+  <div id="app">
+    <header id="header">
+      <h1>🔍 Visual Recog Viewer</h1>
+      <div id="connection-panel">
+        <div class="form-group">
+          <label for="host">主机:</label>
+          <input type="text" id="host" value="localhost" placeholder="localhost">
+        </div>
+        <div class="form-group">
+          <label for="port">端口:</label>
+          <input type="number" id="port" value="8765" placeholder="8765">
+        </div>
+        <button id="btn-connect">连接</button>
+        <button id="btn-disconnect" disabled>断开</button>
+      </div>
+    </header>
+
+    <main id="main-content">
+      <div id="video-container">
+        <canvas id="video-canvas"></canvas>
+        <div id="video-placeholder">
+          <div class="icon">📹</div>
+          <p>等待视频流连接...</p>
+        </div>
+      </div>
+    </main>
+
+    <footer id="status-bar">
+      <span id="fps-counter">FPS: 0</span>
+      <span id="status-message">就绪</span>
+    </footer>
+  </div>
+</body>
+</html>
