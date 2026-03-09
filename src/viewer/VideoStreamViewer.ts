@@ -24,8 +24,18 @@ export class VideoStreamViewer {
     this.ctx = ctx
 
     this.currentImage = new Image()
-    this.currentImage.onload = () => this.render()
+    this.currentImage.onload = () => {
+      console.log('[VideoStreamViewer] Image loaded, rendering...')
+      this.render()
+    }
+    this.currentImage.onerror = (err) => {
+      console.error('[VideoStreamViewer] Image load error:', err)
+    }
     this.resize()
+
+    // 初始清空画布
+    this.ctx.fillStyle = '#1a1a2e'
+    this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
   }
 
   async connect(host: string, port: number): Promise<void> {
@@ -33,57 +43,78 @@ export class VideoStreamViewer {
 
     return new Promise((resolve, reject) => {
       const wsUrl = `ws://${host}:${port}`
+      console.log(`[VideoStreamViewer] Connecting to ${wsUrl}`)
+
       this.ws = new WebSocket(wsUrl)
       this.ws.binaryType = 'arraybuffer'
 
       this.ws.onopen = () => {
-        console.log('WebSocket connected')
+        console.log('[VideoStreamViewer] WebSocket connected')
         resolve()
       }
 
       this.ws.onmessage = (event) => {
+        console.log('[VideoStreamViewer] Received message:', typeof event.data, event.data?.byteLength || event.data?.length)
         if (event.data instanceof ArrayBuffer) {
           this.handleFrame(new Uint8Array(event.data))
+        } else {
+          console.log('[VideoStreamViewer] Text message:', event.data)
         }
       }
 
-      this.ws.onerror = () => {
+      this.ws.onerror = (err) => {
+        console.error('[VideoStreamViewer] WebSocket error:', err)
         reject(new Error('WebSocket connection failed'))
       }
 
-      this.ws.onclose = () => {
+      this.ws.onclose = (event) => {
+        console.log(`[VideoStreamViewer] WebSocket closed: code=${event.code}, reason=${event.reason}`)
         this.onError?.('连接已断开')
       }
     })
   }
 
   private handleFrame(data: Uint8Array): void {
+    console.log(`[VideoStreamViewer] Handling frame: ${data.length} bytes`)
     this.bytesReceived += data.length
     this.frameCount++
 
     const now = performance.now()
     if (now - this.lastStatsTime >= 1000) {
       this.fps = Math.round((this.frameCount * 1000) / (now - this.lastStatsTime))
+      console.log(`[VideoStreamViewer] FPS: ${this.fps}, Frames: ${this.frameCount}`)
       this.onFrame?.(this.fps)
       this.frameCount = 0
       this.bytesReceived = 0
       this.lastStatsTime = now
     }
 
-    const blob = new Blob([data as unknown as ArrayBuffer], { type: 'image/jpeg' })
-    const url = URL.createObjectURL(blob)
+    try {
+      const blob = new Blob([data.buffer], { type: 'image/jpeg' })
+      const url = URL.createObjectURL(blob)
+      console.log(`[VideoStreamViewer] Created blob URL: ${url}`)
 
-    if (this.currentImage) {
-      const oldUrl = this.currentImage.src
-      this.currentImage.src = url
-      if (oldUrl.startsWith('blob:')) URL.revokeObjectURL(oldUrl)
+      if (this.currentImage) {
+        const oldUrl = this.currentImage.src
+        this.currentImage.src = url
+        if (oldUrl.startsWith('blob:')) {
+          URL.revokeObjectURL(oldUrl)
+        }
+      }
+    } catch (err) {
+      console.error('[VideoStreamViewer] Error creating blob:', err)
     }
   }
 
   private render(): void {
-    if (!this.currentImage || !this.currentImage.complete) return
+    if (!this.currentImage || !this.currentImage.complete) {
+      console.log('[VideoStreamViewer] Image not ready for render')
+      return
+    }
 
     const img = this.currentImage
+    console.log(`[VideoStreamViewer] Rendering: ${img.naturalWidth}x${img.naturalHeight}`)
+
     const scale = Math.min(
       this.canvas.width / img.naturalWidth,
       this.canvas.height / img.naturalHeight
@@ -97,9 +128,11 @@ export class VideoStreamViewer {
     this.ctx.fillStyle = '#000'
     this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
     this.ctx.drawImage(img, x, y, drawWidth, drawHeight)
+    console.log('[VideoStreamViewer] Render complete')
   }
 
   disconnect(): void {
+    console.log('[VideoStreamViewer] Disconnecting...')
     if (this.ws) {
       this.ws.close()
       this.ws = null
