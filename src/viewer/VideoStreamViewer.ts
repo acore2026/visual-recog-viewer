@@ -28,8 +28,8 @@ export class VideoStreamViewer {
       console.log('[VideoStreamViewer] Image loaded, rendering...')
       this.render()
     }
-    this.currentImage.onerror = (err) => {
-      console.error('[VideoStreamViewer] Image load error:', err)
+    this.currentImage.onerror = () => {
+      console.error('[VideoStreamViewer] Image load error for src:', this.currentImage?.src?.substring(0, 100))
     }
     this.resize()
 
@@ -89,10 +89,25 @@ export class VideoStreamViewer {
       this.lastStatsTime = now
     }
 
+    // 诊断：打印数据的前16个字节（hex）
+    const hexBytes = Array.from(data.slice(0, 16)).map(b => b.toString(16).padStart(2, '0')).join(' ')
+    console.log(`[VideoStreamViewer] Data header (hex): ${hexBytes}`)
+
+    // 检查是否是有效的 JPEG (FF D8 FF)
+    const isJpeg = data.length >= 3 && data[0] === 0xFF && data[1] === 0xD8 && data[2] === 0xFF
+    console.log(`[VideoStreamViewer] Is valid JPEG: ${isJpeg}`)
+
+    if (!isJpeg) {
+      // 尝试解码为文本看看是什么
+      const textPreview = new TextDecoder().decode(data.slice(0, 100))
+      console.error(`[VideoStreamViewer] Not a JPEG! Text preview: ${textPreview}`)
+      return
+    }
+
     try {
       const blob = new Blob([data.buffer], { type: 'image/jpeg' })
       const url = URL.createObjectURL(blob)
-      console.log(`[VideoStreamViewer] Created blob URL: ${url}`)
+      console.log(`[VideoStreamViewer] Created blob URL: ${url}, blob size: ${blob.size}`)
 
       if (this.currentImage) {
         const oldUrl = this.currentImage.src
